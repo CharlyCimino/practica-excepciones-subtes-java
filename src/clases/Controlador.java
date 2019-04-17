@@ -2,8 +2,9 @@ package clases;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
 import clases.utils.LectorTexto;
+import clases.misexcepciones.EstacionInvalidaException;
+import clases.misexcepciones.LineaInvalidaException;
 import clases.modelo.LineaSubte;
 import clases.vistas.Vista;
 
@@ -21,13 +22,23 @@ public class Controlador {
 	public void iniciar() {
 		String opcLinea = v.mostrarMenuSeleccionLinea();
 		while (!opcLinea.equals("S") && !opcLinea.equals("s")) {
-			LineaSubte lineaSeleccionada = obtenerLineaSegunLetra(opcLinea);
-			int cantEstaciones = lineaSeleccionada.getCantEstaciones();
-			int opcEstacion = v.mostrarMenuSeleccionEstacion(cantEstaciones);
-			while (opcEstacion != 0) {
-				String nomEstacion = lineaSeleccionada.getEstacion(opcEstacion - 1);
-				v.mostrarMensaje("La estación correspondiente es: " + nomEstacion);
-				opcEstacion = v.mostrarMenuSeleccionEstacion(cantEstaciones);
+			try {
+				LineaSubte lineaSeleccionada = obtenerLineaSegunLetra(opcLinea);
+				int cantEstaciones = lineaSeleccionada.getCantEstaciones();
+				int opcEstacion = v.mostrarMenuSeleccionEstacion(cantEstaciones);
+				while (opcEstacion != 0) {
+					String nomEstacion = lineaSeleccionada.getEstacion(opcEstacion - 1);
+					v.mostrarMensaje("La estación correspondiente es: " + nomEstacion);
+					opcEstacion = v.mostrarMenuSeleccionEstacion(cantEstaciones);
+				}
+			} catch (StringIndexOutOfBoundsException e) {
+				v.mostrarMensajeError("No se ingresó un valor");
+			} catch (NumberFormatException e) {
+				v.mostrarMensajeError("No se pudo convertir la entrada a un número");
+			} catch (LineaInvalidaException e) {
+				v.mostrarMensajeError(e.getMessage());
+			} catch (EstacionInvalidaException e) {
+				v.mostrarMensajeError(e.getMessage());
 			}
 			opcLinea = v.mostrarMenuSeleccionLinea();
 		}
@@ -39,9 +50,9 @@ public class Controlador {
 	 * 
 	 * @param letra El nombre de la línea de subte
 	 * @return La línea de subte correspondiente
-	 * @throws Exception
+	 * @throws LineaInvalidaException Si no encuentra la línea
 	 */
-	private LineaSubte obtenerLineaSegunLetra(String letra) {
+	private LineaSubte obtenerLineaSegunLetra(String letra) throws LineaInvalidaException {
 		LineaSubte[] lineas = LineaSubte.values();
 		LineaSubte lineaADevolver = null;
 		int i = 0;
@@ -50,6 +61,9 @@ public class Controlador {
 				lineaADevolver = lineas[i];
 			}
 			i++;
+		}
+		if (lineaADevolver == null) {
+			throw new LineaInvalidaException("Línea inválida");
 		}
 		return lineaADevolver;
 	}

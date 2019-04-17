@@ -3,6 +3,8 @@ package clases.modelo;
 
 import java.util.ArrayList;
 
+import clases.misexcepciones.EstacionInvalidaException;
+
 public enum LineaSubte {
 	
 	A("A"), B("B"), C("C"), D("D"), E("E"), H("H");
@@ -20,6 +22,9 @@ public enum LineaSubte {
     }
 
     public String getEstacion(int indice) {
+    	if (indice < 0 || indice >= this.estaciones.size()) {
+			throw new EstacionInvalidaException("La estación no existe");
+		}
         return this.estaciones.get(indice);
     }  
     
