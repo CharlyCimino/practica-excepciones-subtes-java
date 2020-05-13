@@ -2,91 +2,102 @@ package clases;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+
 import clases.utils.LectorTexto;
-import clases.misexcepciones.EstacionInvalidaException;
-import clases.misexcepciones.LineaInvalidaException;
 import clases.modelo.LineaSubte;
 import clases.vistas.Vista;
 
 public class Controlador {
-	private Vista v;
 
-	public Controlador() {
-		this.v = new Vista();
-		generarLineasDeSubte();
-	}
+    private static final String CORTE_PROGRAMA = "S";
+    private static final int CORTE_ESTACION = 0;
+    private Vista v;
 
-	/**
-	 * Inicia la aplicación
-	 */
-	public void iniciar() {
-		String opcLinea = v.mostrarMenuSeleccionLinea();
-		while (!opcLinea.equals("S") && !opcLinea.equals("s")) {
-			try {
-				LineaSubte lineaSeleccionada = obtenerLineaSegunLetra(opcLinea);
-				int cantEstaciones = lineaSeleccionada.getCantEstaciones();
-				int opcEstacion = v.mostrarMenuSeleccionEstacion(cantEstaciones);
-				while (opcEstacion != 0) {
-					String nomEstacion = lineaSeleccionada.getEstacion(opcEstacion - 1);
-					v.mostrarMensaje("La estación correspondiente es: " + nomEstacion);
-					opcEstacion = v.mostrarMenuSeleccionEstacion(cantEstaciones);
-				}
-			} catch (StringIndexOutOfBoundsException e) {
-				v.mostrarMensajeError("No se ingresó un valor");
-			} catch (NumberFormatException e) {
-				v.mostrarMensajeError("No se pudo convertir la entrada a un número");
-			} catch (LineaInvalidaException e) {
-				v.mostrarMensajeError(e.getMessage());
-			} catch (EstacionInvalidaException e) {
-				v.mostrarMensajeError(e.getMessage());
-			}
-			opcLinea = v.mostrarMenuSeleccionLinea();
-		}
-		System.out.println("FIN DEL PROGRAMA");
-	}
+    public Controlador() {
+        this.v = new Vista();
+    }
 
-	/**
-	 * Busca una línea de subte según la letra. Si no la encuentra, devuelve null
-	 * 
-	 * @param letra El nombre de la línea de subte
-	 * @return La línea de subte correspondiente
-	 * @throws LineaInvalidaException Si no encuentra la línea
-	 */
-	private LineaSubte obtenerLineaSegunLetra(String letra) throws LineaInvalidaException {
-		LineaSubte[] lineas = LineaSubte.values();
-		LineaSubte lineaADevolver = null;
-		int i = 0;
-		while (lineaADevolver == null && i < lineas.length) {
-			if (lineas[i].getNombre().equals(letra)) {
-				lineaADevolver = lineas[i];
-			}
-			i++;
-		}
-		if (lineaADevolver == null) {
-			throw new LineaInvalidaException("Línea inválida");
-		}
-		return lineaADevolver;
-	}
+    /**
+     * Inicia la aplicación
+     */
+    public void iniciar() {
+        try {
+            generarLineasDeSubte();
+            String opcLinea = v.mostrarMenuSeleccionLinea(CORTE_PROGRAMA);
+            while (!opcLinea.equalsIgnoreCase(CORTE_PROGRAMA)) {
+                LineaSubte lineaSeleccionada = obtenerLineaSegunLetra(opcLinea);
+                subMenuSeleccionEstacion(lineaSeleccionada);
+                opcLinea = v.mostrarMenuSeleccionLinea(CORTE_PROGRAMA);
+            }
+        } catch (FileNotFoundException fnfe) {
+            v.mostrarMensajeError("No se encontró el archivo con los datos de las estaciones ");
+        } catch (IOException ioe) {
+            v.mostrarMensajeError("Error de lectura: " + ioe.getMessage());
+        }
+        v.mostrarMensaje("*** FIN DEL PROGRAMA ***");
+    }
 
-	/**
-	 * Carga las estaciones de cada línea de subte desde los archivos de datos
-	 * 
-	 * @throws FileNotFoundException si no se encuentra el archivo
-	 * @throws IOException           si ocurre un error al leer el archivo
-	 */
-	private void generarLineasDeSubte() {
-		try {
-			LineaSubte[] lineas = LineaSubte.values();
-			for (int i = 0; i < lineas.length; i++) {
-				LectorTexto lt = new LectorTexto("src/datos/linea" + lineas[i].getNombre() + ".txt");
-				for (String nombreEstacion : lt.leerLineas()) {
-					lineas[i].addEstacion(nombreEstacion);
-				}
-			}
-		} catch (FileNotFoundException fnfe) {
-			v.mostrarMensajeError("No se encontró el archivo con los datos de estaciones");
-		} catch (IOException ioe) {
-			v.mostrarMensajeError("Error de lectura");
-		}
-	}
+    /**
+     * Permite mostrar al usuario el submenú de selección de estación de la
+     * línea seleccionada.
+     *
+     * @param lineaSeleccionada La línea de subte seleccionada por el usuario.
+     */
+    private void subMenuSeleccionEstacion(LineaSubte lineaSeleccionada) {
+        int opcEstacion = elegirEstacion(lineaSeleccionada);
+        while (opcEstacion != CORTE_ESTACION) {
+            String nomEstacion = lineaSeleccionada.getEstacion(opcEstacion);
+            v.mostrarMensaje("La estación correspondiente es: " + nomEstacion);
+            opcEstacion = elegirEstacion(lineaSeleccionada);
+        }
+    }
+
+    /**
+     * Permite elegir un número de estación de acuerdo a la línea seleccionada.
+     *
+     * @param lineaSeleccionada La línea de subte seleccionada por el usuario.
+     * @return El número de estación seleccionado por el usuario o el valor de
+     * corte.
+     */
+    private int elegirEstacion(LineaSubte lineaSeleccionada) {
+        int cantEstaciones = lineaSeleccionada.getCantEstaciones();
+        int opcEstacion = v.mostrarMenuSeleccionEstacion(cantEstaciones);
+        return opcEstacion;
+    }
+
+    /**
+     * Busca una línea de subte según la letra. Si no la encuentra, devuelve
+     * null
+     *
+     * @param letra La letra de la línea de subte.
+     * @return La línea de subte correspondiente.
+     */
+    private LineaSubte obtenerLineaSegunLetra(String letra) {
+        LineaSubte[] lineas = LineaSubte.values();
+        LineaSubte lineaADevolver = null;
+        int i = 0;
+        while (lineaADevolver == null && i < lineas.length) {
+            if (lineas[i].getNombre().equals(letra)) {
+                lineaADevolver = lineas[i];
+            }
+            i++;
+        }
+        return lineaADevolver;
+    }
+
+    /**
+     * Carga las estaciones de cada línea de subte desde los archivos de datos.
+     *
+     * @throws FileNotFoundException si no se encuentra algún archivo de datos.
+     * @throws IOException si ocurre un error de entrada/salida.
+     */
+    private void generarLineasDeSubte() throws FileNotFoundException, IOException {
+        LineaSubte[] lineas = LineaSubte.values();
+        for (int i = 0; i < lineas.length; i++) {
+            LectorTexto lt = new LectorTexto("src/datos/linea" + lineas[i].getNombre() + ".txt");
+            for (String nombreEstacion : lt.leerLineas()) {
+                lineas[i].addEstacion(nombreEstacion);
+            }
+        }
+    }
 }

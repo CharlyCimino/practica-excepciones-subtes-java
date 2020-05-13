@@ -8,35 +8,36 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class LectorTexto {
-	private FileReader archivoLectura;
-	private BufferedReader bufferDeEntrada;
 
-	public LectorTexto(String path) throws FileNotFoundException {
-		prepararLectura(path);
-	}
+    private FileReader archivoLectura;
+    private BufferedReader bufferDeEntrada;
 
-	private void prepararLectura(String ruta) throws FileNotFoundException {
-		this.archivoLectura = new FileReader(new File(ruta));
-		bufferDeEntrada = new BufferedReader(this.archivoLectura);
-	}
+    public LectorTexto(String path) throws FileNotFoundException {
+        prepararLectura(path);
+    }
 
-	private String leerLinea() throws IOException {
-		String linea = bufferDeEntrada.readLine();
-		return linea;
-	}
-	
-	public ArrayList<String> leerLineas() throws IOException {
-		ArrayList<String> lines = new ArrayList<String>();
-		String cadena = leerLinea();
-		while (cadena != null) {
-			lines.add(cadena);
-			cadena = leerLinea();
-		}
-		cerrarArchivo();
-		return lines;
-	}
+    private void prepararLectura(String ruta) throws FileNotFoundException {
+        this.archivoLectura = new FileReader(new File(ruta));
+        bufferDeEntrada = new BufferedReader(this.archivoLectura);
+    }
 
-	private void cerrarArchivo() throws IOException {
-		archivoLectura.close();
-	}
+    private String leerLinea() throws IOException {
+        String linea = bufferDeEntrada.readLine();
+        return linea;
+    }
+
+    public ArrayList<String> leerLineas() throws IOException {
+        ArrayList<String> lines = new ArrayList<String>();
+        String cadena = leerLinea();
+        while (cadena != null) {
+            lines.add(cadena);
+            cadena = leerLinea();
+        }
+        cerrarArchivo();
+        return lines;
+    }
+
+    private void cerrarArchivo() throws IOException {
+        archivoLectura.close();
+    }
 }
